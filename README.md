@@ -8,7 +8,9 @@ Tela de seleção de personagem inspirada no visual de GTA, feita com HTML, CSS 
 
 ## 📸 Preview
 
-Acesse: 
+Acesse: https://gta-ia.vercel.app/
+
+<img src="img/imagem do projeto.png" alt="imagem do projeto">
 
 ---
 

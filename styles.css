@@ -26,17 +26,21 @@ body {
 
 /* ---------- Nome gigante ---------- */
 .nome {
+    --fonte-nome: min(calc(var(--altura-personagem) * 0.42), 32vw);
+
     position: absolute;
     z-index: 1;
-    bottom: calc(var(--altura-personagem) * 0.68);
+    bottom: min(calc(var(--altura-personagem) * 0.90),
+            calc(100dvh - var(--fonte-nome) * 1.05));
     width: 100%;
     text-align: center;
     color: #ff3cac;
-    font-size: min(calc(var(--altura-personagem) * 0.42), 32vw);
+    font-size: var(--fonte-nome);
     line-height: 1;
     white-space: nowrap;
     pointer-events: none;
     user-select: none;
+    transition: color 0.3s;
 }
 
 /* ---------- Personagem ---------- */
@@ -145,7 +149,7 @@ h1 {
     transform: scale(1.1);
 }
 
-/* ---------- Modais (galeria / câmera) ---------- */
+/* ---------- (galeria / câmera) ---------- */
 .modal {
     position: fixed;
     inset: 0;

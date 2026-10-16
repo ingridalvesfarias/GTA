@@ -8,10 +8,10 @@ function selecionar(avatar) {
     avatar.classList.add("ativo");
 
     nome.textContent = avatar.dataset.nome;
+    nome.style.color = avatar.dataset.cor;
     personagem.src = avatar.src;
     personagem.alt = avatar.dataset.nome;
     personagem.classList.remove("foto-usuario");
-    document.body.style.backgroundImage = `url("${avatar.dataset.fundo}")`;
 }
 
 avatares.forEach((avatar) => {
@@ -77,15 +77,12 @@ document.getElementById("tirar-foto").addEventListener("click", () => {
 async function usarFoto(arquivo) {
     avatares.forEach((a) => a.classList.remove("ativo"));
     nome.textContent = "Você";
+    nome.style.color = "#ffd319";
     personagem.classList.add("foto-usuario");
     personagem.src = URL.createObjectURL(arquivo); // preview imediato
-
-    // Quando tiver o backend com a IA, descomente:
-    // const imagemGta = await gerarVersaoGta(arquivo);
-    // personagem.src = imagemGta;
 }
 
-// ---------- Ponto de ligação com a IA (precisa de backend) ----------
+// ---------- Ponto de ligação com a IA (em desenvolvimento) ----------
 async function gerarVersaoGta(arquivo) {
     const dados = new FormData();
     dados.append("foto", arquivo);

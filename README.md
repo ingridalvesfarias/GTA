@@ -2,7 +2,7 @@
 
 > **Não é só um jogo.** Escolha uma lenda de Dev City. Ou tire uma selfie e vire uma.
 
-Tela de seleção de personagem inspirada no visual de GTA, feita com HTML, CSS e JavaScript puro. Ao clicar em cada personagem, o nome, a imagem e o fundo da tela mudam. Também é possível enviar uma foto da galeria ou tirar uma selfie com a câmera para ocupar o lugar do personagem.
+Tela de seleção de personagem inspirada no visual de GTA, feita com HTML, CSS e JavaScript puro. Ao clicar em cada personagem, o nome e a imagem mudam. Também é possível enviar uma foto da galeria ou tirar uma selfie com a câmera, e a **IA transforma você em um personagem de videogame**, com contorno grosso e cores vivas.
 
 ---
 
@@ -16,10 +16,12 @@ Acesse: https://gta-ia.vercel.app/
 
 ## ✨ Funcionalidades
 
-- 🎮 **Seleção de personagem**: Lucia, Jason e CJ, cada um com seu próprio fundo.
+- 🎮 **Seleção de personagem**: Lucia, Jason e CJ, cada um com a sua cor de destaque.
 - 🔤 **Nome gigante dinâmico** atrás do personagem, no estilo das telas de loading do GTA.
-- 🖼️ **Troca de background** sincronizada com o personagem escolhido.
 - 📷 **Foto do usuário**: envio pela galeria ou captura direta pela câmera.
+- 🤖 **Versão GTA gerada por IA**: a foto vira um personagem de videogame com fundo transparente, usando o [Puter.js](https://developer.puter.com/).
+- ⏳ **Tela de loading**: enquanto a IA gera a imagem, aparece só um "Loading..." animado, e o personagem entra quando fica pronto.
+- 🛟 **Plano B**: se a IA falhar, a foto original é exibida no lugar.
 - 📱 **100% responsivo**: celular em pé, celular deitado, tablet e desktop.
 - 🎨 Visual com a fonte **Bangers** e paleta rosa/amarelo neon.
 
@@ -29,7 +31,8 @@ Acesse: https://gta-ia.vercel.app/
 
 - HTML5
 - CSS3 (variáveis CSS, `clamp()`, `min()`, `dvh`, media queries)
-- JavaScript (DOM, `getUserMedia`, `Canvas`, `FormData`)
+- JavaScript (DOM, `getUserMedia`, `Canvas`, `FileReader`, `async/await`)
+- [Puter.js](https://developer.puter.com/): geração de imagem por IA direto do front-end
 - [Google Fonts: Bangers](https://fonts.google.com/specimen/Bangers)
 
 ---
@@ -39,12 +42,11 @@ Acesse: https://gta-ia.vercel.app/
 ```
 gta-ia/
 ├── img/
-│   ├── background.jpg
-│   ├── background1.jpg
 │   ├── background2.jpg
 │   ├── lucia.png
 │   ├── jason.png
-│   └── cj.png
+│   ├── cj.png
+│   └── imagem do projeto.png
 ├── index.html
 ├── scripts.js
 └── styles.css
@@ -63,7 +65,9 @@ gta-ia/
 2. Abra a pasta no **VS Code**.
 3. Rode com a extensão **Live Server** (clique direito em `index.html` → *Open with Live Server*).
 
-> ⚠️ A câmera só funciona em `localhost`, `127.0.0.1` ou em páginas com `https`. Abrir o arquivo direto no navegador (`file://`) não libera o acesso.
+> ⚠️ A câmera e a IA só funcionam em `localhost`, `127.0.0.1` ou em páginas com `https`. Abrir o arquivo direto no navegador (`file://`) não libera o acesso.
+
+> 💡 Na primeira geração, o Puter pode pedir para você entrar ou criar uma conta gratuita.
 
 ---
 
@@ -72,19 +76,28 @@ gta-ia/
 Cada bolinha do menu guarda as informações do personagem em atributos `data-*`:
 
 ```html
-<img class="avatar" src="img/jason.png" data-nome="Jason" data-fundo="img/background1.jpg">
+<img class="avatar" src="img/jason.png" data-nome="Jason" data-cor="#00b2c9">
 ```
 
-Ao clicar, o JavaScript lê esses dados e atualiza o nome, a imagem do personagem e o `background-image` do `body`.
+Ao clicar, o JavaScript lê esses dados e atualiza o nome, a cor do nome e a imagem do personagem.
 
 O botão 📸 abre um menu com duas opções:
 
-- **Galeria**: abre o seletor de arquivos e mostra a imagem escolhida.
-- **Câmera**: abre o vídeo ao vivo, captura o frame em um `canvas` e usa a imagem gerada.
+- **Galeria**: abre o seletor de arquivos e usa a imagem escolhida.
+- **Câmera**: abre o vídeo ao vivo e captura o frame em um `canvas`.
+
+Depois de escolher a foto, o fluxo é este:
+
+1. A foto é lida com o `FileReader` e convertida em um link (`readAsDataURL`).
+2. O site mostra o texto **Loading...** e esconde o personagem.
+3. A foto é enviada para a IA com `puter.ai.txt2img`, junto com um prompt pedindo o estilo de videogame e fundo transparente.
+4. A imagem gerada entra no lugar do personagem, e o nome vira **Você**.
+
+Se o usuário clicar em outro personagem durante o loading, a geração é descartada para não sobrescrever a nova escolha.
 
 ---
 
-> 🔐 **Importante:** a chave de API nunca deve ficar no front-end. Use sempre um servidor intermediário.
+> 🔐 **Sem chave de API no front-end:** o Puter.js cuida da autenticação, então nenhuma chave fica exposta no código. Se um dia você trocar para outro serviço de IA, use sempre um servidor intermediário.
 
 ---
 

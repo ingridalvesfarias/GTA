@@ -67,6 +67,18 @@ body {
     border-radius: 24px 24px 0 0;
 }
 
+/* IA gerando a versão GTA: personagem escondido, só aparece o "Loading..." */
+.personagem.gerando {
+    visibility: hidden;
+}
+
+.nome.carregando {
+    --fonte-nome: min(16vw, 22dvh);
+
+    bottom: 40dvh;
+    text-align: center;
+}
+
 /* ---------- Textos ---------- */
 .textos {
     position: absolute;

@@ -11,7 +11,9 @@ function selecionar(avatar) {
     nome.style.color = avatar.dataset.cor;
     personagem.src = avatar.src;
     personagem.alt = avatar.dataset.nome;
-    personagem.classList.remove("foto-usuario");
+    personagem.classList.remove("foto-usuario", "gerando");
+    pedidoAtual++; // cancela qualquer geração da IA em andamento
+    pararLoading();
 }
 
 avatares.forEach((avatar) => {
@@ -50,7 +52,16 @@ document.getElementById("opcao-camera").addEventListener("click", async () => {
         video.srcObject = stream;
         modalCamera.hidden = false;
     } catch (erro) {
-        alert("Não consegui acessar a câmera. Verifique a permissão do navegador.");
+        console.error(erro);
+        if (erro.name === "NotAllowedError" || erro.name === "SecurityError") {
+            alert("A câmera está bloqueada. Clique no ícone de câmera na barra de endereço, escolha \"Permitir\" e recarregue a página.");
+        } else if (erro.name === "NotFoundError") {
+            alert("Não encontrei nenhuma câmera neste dispositivo.");
+        } else if (erro.name === "NotReadableError") {
+            alert("A câmera está sendo usada por outro programa. Feche-o e tente de novo.");
+        } else {
+            alert("Não consegui acessar a câmera. Verifique a permissão do navegador.");
+        }
     }
 });
 
@@ -74,22 +85,93 @@ document.getElementById("tirar-foto").addEventListener("click", () => {
 });
 
 // ---------- Usar a foto ----------
+let pedidoAtual = 0; // evita que uma resposta antiga da IA sobrescreva uma escolha mais nova
+
 async function usarFoto(arquivo) {
+    const pedido = ++pedidoAtual;
+
     avatares.forEach((a) => a.classList.remove("ativo"));
-    nome.textContent = "Você";
     nome.style.color = "#ffd319";
-    personagem.classList.add("foto-usuario");
-    personagem.src = URL.createObjectURL(arquivo); // preview imediato
+
+    // Enquanto a IA trabalha: esconde o personagem e mostra só "Loading..."
+    personagem.classList.add("gerando");
+    iniciarLoading();
+
+    try {
+        const versaoGta = await gerarVersaoGta(arquivo);
+
+        // Se a pessoa clicou em outro personagem/foto no meio do caminho, ignora
+        if (pedido !== pedidoAtual) return;
+
+        pararLoading();
+        nome.textContent = "Você";
+        personagem.classList.remove("foto-usuario");
+        personagem.src = versaoGta;
+        personagem.alt = "Você em versão GTA";
+    } catch (erro) {
+        console.error(erro);
+        if (pedido !== pedidoAtual) return;
+
+        // Deu erro: mostra a foto original no lugar
+        pararLoading();
+        nome.textContent = "Você";
+        personagem.classList.add("foto-usuario");
+        personagem.src = URL.createObjectURL(arquivo);
+        alert(`Não consegui gerar a versão GTA (${mensagemDeErro(erro)}). Mostrei a sua foto original.`);
+    } finally {
+        if (pedido === pedidoAtual) personagem.classList.remove("gerando");
+    }
 }
 
-// ---------- Ponto de ligação com a IA (em desenvolvimento) ----------
+function mensagemDeErro(erro) {
+    if (!erro) return "erro desconhecido";
+    if (typeof erro === "string") return erro;
+    return erro.error?.message || erro.message || JSON.stringify(erro);
+}
+
+// ---------- Texto "Loading..." ----------
+let intervaloLoading = null;
+
+function iniciarLoading() {
+    pararLoading();
+    nome.classList.add("carregando");
+    let pontos = 0;
+    nome.textContent = "Loading";
+    intervaloLoading = setInterval(() => {
+        pontos = (pontos + 1) % 4;
+        nome.textContent = "Loading" + ".".repeat(pontos);
+    }, 400);
+}
+
+function pararLoading() {
+    clearInterval(intervaloLoading);
+    intervaloLoading = null;
+    nome.classList.remove("carregando");
+}
+
+// ---------- Ligação com a IA (Puter.js) ----------
+function arquivoParaDataURL(arquivo) {
+    return new Promise((resolve, reject) => {
+        const leitor = new FileReader();
+        leitor.onload = () => resolve(leitor.result);
+        leitor.onerror = () => reject(new Error("Falha ao ler a foto"));
+        leitor.readAsDataURL(arquivo);
+    });
+}
+
 async function gerarVersaoGta(arquivo) {
-    const dados = new FormData();
-    dados.append("foto", arquivo);
+    const fotoEmUrl = await arquivoParaDataURL(arquivo);
 
-    const resposta = await fetch("/api/gerar-gta", { method: "POST", body: dados });
-    if (!resposta.ok) throw new Error("Falha ao gerar a imagem");
+    const desenho = await puter.ai.txt2img(
+        "Transforme a pessoa desta foto em um personagem de videogame: contorno preto grosso, cores vivas, meio corpo, mantendo o rosto parecido. Fundo totalmente transparente: sem cenário, sem chão e sem sombra.",
+        {
+            model: "replicate:openai/gpt-image-2.5-flare",
+            provider: "openai",
+            input_image: leitor.result,
+            quality: "medium",
+            providerOptions: { background: "transparent" }
+        }
+    );
 
-    const blob = await resposta.blob();
-    return URL.createObjectURL(blob);
+    return desenho.src; // txt2img devolve um <img>; pegamos o link dele
 }

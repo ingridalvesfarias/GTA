@@ -167,7 +167,7 @@ async function gerarVersaoGta(arquivo) {
         {
             model: "replicate:openai/gpt-image-2.5-flare",
             provider: "openai",
-            input_image: leitor.result,
+            input_image: fotoEmUrl,
             quality: "medium",
             providerOptions: { background: "transparent" }
         }

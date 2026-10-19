@@ -2,7 +2,7 @@
 
 > **Não é só um jogo.** Escolha uma lenda de Dev City. Ou tire uma selfie e vire uma.
 
-Tela de seleção de personagem inspirada no visual de GTA, feita com HTML, CSS e JavaScript puro. Ao clicar em cada personagem, o nome e a imagem mudam. Também é possível enviar uma foto da galeria ou tirar uma selfie com a câmera, e a **IA transforma você em um personagem de videogame**, com contorno grosso e cores vivas.
+Tela de seleção de personagem inspirada no visual de GTA, feita com HTML, CSS e JavaScript puro. Ao clicar em cada personagem, o nome e a imagem mudam. Também é possível enviar uma foto da galeria ou tirar uma selfie com a câmera, e a **IA transforma você em um personagem de videogame**, com contorno grosso e cores vivas. Depois, é só **baixar a imagem final** com o seu personagem sobre o cenário do jogo.
 
 ---
 
@@ -20,6 +20,7 @@ Acesse: https://gta-ia.vercel.app/
 - 🔤 **Nome gigante dinâmico** atrás do personagem, no estilo das telas de loading do GTA.
 - 📷 **Foto do usuário**: envio pela galeria ou captura direta pela câmera.
 - 🤖 **Versão GTA gerada por IA**: a foto vira um personagem de videogame com fundo transparente, usando o [Puter.js](https://developer.puter.com/).
+- ⬇️ **Baixar imagem**: depois que a IA gera o personagem, aparece o botão **Baixar imagem**. O arquivo PNG sai só com o cenário e o seu personagem, sem o nome "Você", sem o menu e sem os textos da tela.
 - ⏳ **Tela de loading**: enquanto a IA gera a imagem, aparece só um "Loading..." animado, e o personagem entra quando fica pronto.
 - 🛟 **Plano B**: se a IA falhar, a foto original é exibida no lugar.
 - 📱 **100% responsivo**: celular em pé, celular deitado, tablet e desktop.
@@ -31,7 +32,7 @@ Acesse: https://gta-ia.vercel.app/
 
 - HTML5
 - CSS3 (variáveis CSS, `clamp()`, `min()`, `dvh`, media queries)
-- JavaScript (DOM, `getUserMedia`, `Canvas`, `FileReader`, `async/await`)
+- JavaScript (DOM, `getUserMedia`, `Canvas`, `FileReader`, `Blob`, `async/await`)
 - [Puter.js](https://developer.puter.com/): geração de imagem por IA direto do front-end
 - [Google Fonts: Bangers](https://fonts.google.com/specimen/Bangers)
 
@@ -91,9 +92,19 @@ Depois de escolher a foto, o fluxo é este:
 1. A foto é lida com o `FileReader` e convertida em um link (`readAsDataURL`).
 2. O site mostra o texto **Loading...** e esconde o personagem.
 3. A foto é enviada para a IA com `puter.ai.txt2img`, junto com um prompt pedindo o estilo de videogame e fundo transparente.
-4. A imagem gerada entra no lugar do personagem, e o nome vira **Você**.
+4. A imagem gerada entra no lugar do personagem, o nome vira **Você** e o botão **Baixar imagem** aparece.
 
 Se o usuário clicar em outro personagem durante o loading, a geração é descartada para não sobrescrever a nova escolha.
+
+### ⬇️ Como o download funciona
+
+Ao clicar em **Baixar imagem**, o JavaScript monta o resultado num `canvas` escondido, sem usar nada do que aparece na tela:
+
+1. Carrega o `background2.jpg` e a imagem gerada pela IA (convertida em `Blob` local, para o canvas não ser bloqueado por CORS).
+2. Desenha o cenário no tamanho original e, por cima, o personagem centralizado e colado embaixo, ocupando 85% da altura.
+3. Exporta o `canvas` como PNG (`toBlob`) e dispara o download com o nome `eu-em-versao-gta.png`.
+
+Como o nome gigante, o menu e os textos são elementos HTML e não são desenhados no `canvas`, eles não aparecem no arquivo baixado. O botão some ao trocar de personagem e só volta quando uma nova versão GTA é gerada.
 
 ---
 

@@ -1,6 +1,8 @@
 const nome = document.getElementById("nome");
 const personagem = document.getElementById("personagem");
 const avatares = document.querySelectorAll(".avatar");
+const btnBaixar = document.getElementById("btn-baixar");
+let imagemGerada = null; // link da versão GTA gerada pela IA
 
 // ---------- Trocar personagem ----------
 function selecionar(avatar) {
@@ -14,6 +16,8 @@ function selecionar(avatar) {
     personagem.classList.remove("foto-usuario", "gerando");
     pedidoAtual++; // cancela qualquer geração da IA em andamento
     pararLoading();
+    imagemGerada = null;
+    btnBaixar.hidden = true;
 }
 
 avatares.forEach((avatar) => {
@@ -89,6 +93,8 @@ let pedidoAtual = 0; // evita que uma resposta antiga da IA sobrescreva uma esco
 
 async function usarFoto(arquivo) {
     const pedido = ++pedidoAtual;
+    imagemGerada = null;
+    btnBaixar.hidden = true;
 
     avatares.forEach((a) => a.classList.remove("ativo"));
     nome.style.color = "#ffd319";
@@ -108,6 +114,9 @@ async function usarFoto(arquivo) {
         personagem.classList.remove("foto-usuario");
         personagem.src = versaoGta;
         personagem.alt = "Você em versão GTA";
+
+        imagemGerada = versaoGta;
+        btnBaixar.hidden = false;
     } catch (erro) {
         console.error(erro);
         if (pedido !== pedidoAtual) return;
@@ -175,3 +184,56 @@ async function gerarVersaoGta(arquivo) {
 
     return desenho.src; // txt2img devolve um <img>; pegamos o link dele
 }
+
+// ---------- Baixar imagem (só fundo + personagem) ----------
+function carregarImagem(src) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("Falha ao carregar imagem"));
+        img.src = src;
+    });
+}
+
+btnBaixar.addEventListener("click", async () => {
+    if (!imagemGerada) return;
+
+    try {
+        // converte para blob local, assim o canvas não fica "bloqueado" por CORS
+        const resposta = await fetch(imagemGerada);
+        const blob = await resposta.blob();
+        const urlLocal = URL.createObjectURL(blob);
+
+        const [fundo, pessoa] = await Promise.all([
+            carregarImagem("img/background2.jpg"),
+            carregarImagem(urlLocal),
+        ]);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = fundo.naturalWidth;
+        canvas.height = fundo.naturalHeight;
+        const ctx = canvas.getContext("2d");
+
+        // 1) fundo
+        ctx.drawImage(fundo, 0, 0, canvas.width, canvas.height);
+
+        // 2) personagem centralizado, colado embaixo, ocupando 85% da altura
+        const altura = canvas.height * 0.85;
+        const largura = (pessoa.naturalWidth / pessoa.naturalHeight) * altura;
+        ctx.drawImage(pessoa, (canvas.width - largura) / 2, canvas.height - altura, largura, altura);
+
+        URL.revokeObjectURL(urlLocal);
+
+        // 3) baixar
+        canvas.toBlob((resultado) => {
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(resultado);
+            link.download = "eu-em-versao-gta.png";
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }, "image/png");
+    } catch (erro) {
+        console.error(erro);
+        alert("Não consegui gerar a imagem para download. Tente de novo.");
+    }
+});

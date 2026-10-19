@@ -79,6 +79,29 @@ body {
     text-align: center;
 }
 
+/* ---------- Botão de baixar imagem ---------- */
+.baixar {
+    position: absolute;
+    z-index: 4;
+    top: 20px;
+    right: 20px;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px;
+    background: #ffd319;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.baixar:hover {
+    transform: scale(1.05);
+}
+
+.baixar[hidden] {
+    display: none;
+}
+
 /* ---------- Textos ---------- */
 .textos {
     position: absolute;
